@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同步视频</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@1.0.1/dist/css/mdui.min.css"
+        integrity="sha384-cLRrMq39HOZdvE0j6yBojO4+1PrHfB7a9l5qLcmRm/fiWXYY+CndJPmyu5FV/9Tw" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/mdui@1.0.1/dist/js/mdui.min.js"
+        integrity="sha384-gCMZcshYKOGRX9r6wbDrvF+TcCCswSHFucUzUPwka+Gr+uHgjlYvkABr95TCOz3A"
+        crossorigin="anonymous"></script>
+    <style>
+        .app {
+            width: 80%;
+            height: auto;
+            margin: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="app">
+        <div id="DPlayer" ref="dplayer" class="mdui-shadow-10"></div>
+        <div class="mdui-row mdui-valign">
+            <div class="mdui-col-xs-12 mdui-col-sm-8">
+                <div class="mdui-textfield">
+                    <label class="mdui-textfield-label">视频地址</label>
+                    <input class="mdui-textfield-input" type="text" v-model="videoUrl" />
+                </div>
+            </div>
+            <div class="mdui-col-xs-6 mdui-col-sm-4">
+                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" mdui-tooltip="{content: '添加视频'}"
+                    @click='addVideo'><i class="mdui-icon material-icons">add</i></button>
+            </div>
+        </div>
+        <div>在线人数：{{userNumber}}</div>
+
+        <ul class="mdui-list">
+            <label class="mdui-list-item mdui-ripple" v-for='(videoItem,index) in videoList'>
+                <div class="mdui-list-item-content">{{videoItem}}</div>
+                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='playVideo(videoItem)'><i
+                        class="mdui-icon material-icons">play_arrow</i></button>
+                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='deletVideo(index,videoItem)'><i
+                        class="mdui-icon material-icons">delete</i></button>
+                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='share(videoItem)'><i
+                        class="mdui-icon material-icons">share</i></button>
+            </label>
+        </ul>
+    </div>
+</body>
+<script src="./script/socket.io.js"></script>
+<script type="module" src="./script/main.js"></script>
+
+</html>
