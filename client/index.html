@@ -44,7 +44,7 @@
         <ul class="mdui-list">
             <label class="mdui-list-item mdui-ripple" v-for='(videoItem,index) in videoList'>
                 <div class="mdui-list-item-content">{{videoItem}}</div>
-                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='playVideo(videoItem)'><i
+                <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='playVideo(index,videoItem,true)'><i
                         class="mdui-icon material-icons">play_arrow</i></button>
                 <button class="mdui-fab mdui-color-theme-accent mdui-ripple" @click='deletVideo(index,videoItem)'><i
                         class="mdui-icon material-icons">delete</i></button>
@@ -52,6 +52,7 @@
                         class="mdui-icon material-icons">share</i></button>
             </label>
         </ul>
+
     </div>
 </body>
 <script src="./script/socket.io.js"></script>

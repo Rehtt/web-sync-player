@@ -1,19 +1,21 @@
 import './DPlayer.min.js';
 import './vue.min.js';
 
-new Vue({
+let WebSocketUrl = 'http://192.168.31.59:8233';
+
+let app = new Vue({
     el: '#app',
     data: {
         socket: null,
         dp: null,
-        fid: '',
-        videoList: [],
+        videoList: Array(),
+        videoListUrl: Array(),
         userNumber: 0,
-        userId: '',
         controlParam: {
             user: '',
             action: '',
             time: '',
+            videoListIndex: 0,
         },
         videoUrl: '',
     },
@@ -43,36 +45,45 @@ new Vue({
                 case "seek":
                     this.dp.seek(result.time);
                     break
+                case "init":
+                    this.playVideo(result.videoListIndex, this.videoList[result.videoListIndex], false);
+                    break
             }
         },
         addVideo() {
             if (this.videoUrl) {
-                this.videoList.push(decodeURI(this.videoUrl))
+                console.log(typeof (this.videoList))
+                this.videoList.push(decodeURI(this.videoUrl));
+                this.socket.emit('video-list', JSON.stringify(this.videoList));
                 mdui.snackbar({
                     message: '添加：' + this.videoUrl,
                 });
             }
-            localStorage.setItem('videoList', JSON.stringify(this.videoList))
+            // localStorage.setItem('videoList', JSON.stringify(this.videoList))
         },
-        playVideo(src) {
+        playVideo(index, src, f) {
+            this.videoUrl = this.videoListUrl[index];
             this.dp.video.src = this.videoUrl;
             this.dp.seek(0);
-            localStorage.setItem('currentPlayVideo', src)
+            if (f) {
+                this.controlParam.videoListIndex = index;
+                this.sendControl('init');
+            }
             mdui.snackbar({
                 message: '播放：' + src,
             });
-            // this.socket.emit('video-src', JSON.stringify({ src: src, user: this.userId }))
         },
         deletVideo(index, src) {
-            this.videoList.splice(index, 1)
-            localStorage.setItem('videoList', JSON.stringify(this.videoList))
+            this.videoList.splice(index, 1);
+            // localStorage.setItem('videoList', JSON.stringify(this.videoList))
+            this.socket.emit('video-list', JSON.stringify(this.videoList));
             mdui.snackbar({
                 message: '删除：' + src,
             });
         },
         share(src) {
             let aux = document.createElement("input");
-            aux.setAttribute("value", window.location.href + '?video=' + src);
+            aux.setAttribute("value", window.location.href + '?video=' + encodeURI(src));
             document.body.appendChild(aux);
             aux.select();
             document.execCommand("copy");
@@ -86,20 +97,76 @@ new Vue({
             var r = window.location.search.substr(1).match(reg);
             if (r != null) return decodeURI(r[2]);
             return null;
+        },
+        socketInit() {
+            this.socket = new io(WebSocketUrl);
+            this.socket.emit('room', 'asd')
+            this.socket.on('video-control', (res) => {
+                let result = JSON.parse(res);
+                if (result.user != this.controlParam.user) {
+                    this.resultHandler(result)
+                }
+            });
+            this.socket.emit('admin', 'qwe')
+            this.socket.on('admin', (res) => {
+                console.log(res)
+            })
+            this.socket.on('user-number', (res) => {
+                this.userNumber = res;
+            });
+            this.socket.on('video-list', (res) => {
+                this.videoListUrl = [];
+                this.videoList = [];
+                let list = JSON.parse(res);
+                for (let i = 0; i < list.length; i++) {
+                    let n = list[i].split('/');
+                    if (n[n.length - 1] != '') {
+                        this.videoList.push(n[n.length - 1]);
+                        this.videoListUrl.push(list[i]);
+                    }
+                }
+
+            });
         }
 
     },
     created() {
-        this.userId = this.randomString(10);
+        this.controlParam.user = this.randomString(10);
+        this.videoList = [];
+        // let localList = JSON.parse(localStorage.getItem('videoList'));
+        // this.videoList = localList ? localList : [];
 
-        let localList = JSON.parse(localStorage.getItem('videoList'));
-        this.videoList = localList ? localList : [];
+        // let currentPlayVideo = localStorage.getItem('currentPlayVideo');
+        // let video = this.getQueryString('video');
 
-        let currentPlayVideo = localStorage.getItem('currentPlayVideo');
-        let video = this.getQueryString('video');
+        // this.videoUrl = video ? video : currentPlayVideo ? currentPlayVideo : '';
+        mdui.prompt('请输入房间号', '房间',
+            function (value) {
+                if (value == '') {
+                    mdui.confirm('输入正确房间号', function () {
+                        location.reload();
+                    }, function () {
 
-        this.videoUrl = video ? video : currentPlayVideo ? currentPlayVideo : '';
-
+                    },
+                    {
+                        closeOnEsc: false,
+                        modal: true,
+                        history: false,
+                        closeOnCancel: false
+                    });
+                } else {
+                    app.socketInit();
+                }
+            },
+            function (value) { },
+            {
+                confirmOnEnter: true,
+                closeOnEsc: false,
+                modal: true,
+                history: false,
+                closeOnCancel: false
+            }
+        );
     },
     mounted() {
         this.dp = new DPlayer({
@@ -116,17 +183,7 @@ new Vue({
                 },
             ],
         });
-        this.socket = new io('http://rehtt.com:8233');
-        this.socket.emit('coo', JSON.stringify({ fid: this.fid }));
-        this.socket.on('video-control', (res) => {
-            let result = JSON.parse(res);
-            if (result.user !== this.userId) {
-                this.resultHandler(result)
-            }
-        });
-        this.socket.on('user-number', (res) => {
-            this.userNumber = res;
-        });
+
         this.dp.on('pause', () => {
             this.sendControl('pause');
         });
