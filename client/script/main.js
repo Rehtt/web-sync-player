@@ -62,7 +62,7 @@ let app = new Vue({
             // localStorage.setItem('videoList', JSON.stringify(this.videoList))
         },
         playVideo(index, src, f) {
-            this.videoUrl = this.videoListUrl[index];
+            this.videoUrl = encodeURI(this.videoListUrl[index]);
             this.dp.video.src = this.videoUrl;
             this.dp.seek(0);
             if (f) {
@@ -107,10 +107,6 @@ let app = new Vue({
                     this.resultHandler(result)
                 }
             });
-            this.socket.emit('admin', 'qwe')
-            this.socket.on('admin', (res) => {
-                console.log(res)
-            })
             this.socket.on('user-number', (res) => {
                 this.userNumber = res;
             });
